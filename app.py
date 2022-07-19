@@ -50,3 +50,22 @@ with st.form("Entry_form", clear_on_submit=True):
         st.write(f"incomes: {incomes}")
         st.write(f"expenses: {expenses}")
         st.success("Data saved!")
+
+
+st.header("Virtualization")
+with st.form("saved_periods"):
+    period = st.selectbox("Select Period:", ["2022_March"])
+    submitted = st.form_submit_button("Plot Period")
+    if submitted:
+        comment = "Some comment"
+        incomes = {"Salary": 5000, "Other": 2000}
+        expenses = {"Mortage": 2200, "Food": 500, "Buddy": 300}
+
+        total_income = sum(incomes.values())
+        total_expenses = sum(expenses.values())
+        remaining_budget = total_income - total_expenses
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Total income", f"{total_income} {currency}")
+        col2.metric("Total expense", f"{total_expenses} {currency}")
+        col3.metric("Remaining budget", f"{remaining_budget} {currency}")
+        st.text(f"Comment: {comment}")
