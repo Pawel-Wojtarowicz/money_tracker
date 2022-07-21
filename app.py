@@ -11,11 +11,14 @@ expenses = ["Mortage", "Loan", "Rent", "Bills", "Car",
 currency = "PLN"
 page_title = "Where is my money"
 page_icon = ":moneybag:"
-layout = "centered"  # check wide
+layout = "centered"
 # --------------------
 
+# ----- CONFIG -----
 st.set_page_config(page_title=page_title, page_icon=page_icon, layout=layout)
 st.title(page_title + " " + page_icon)
+# --------------------
+
 
 # Drop down values
 years = [datetime.today().year, datetime.today().year - 1]
@@ -69,3 +72,21 @@ with st.form("saved_periods"):
         col2.metric("Total expense", f"{total_expenses} {currency}")
         col3.metric("Remaining budget", f"{remaining_budget} {currency}")
         st.text(f"Comment: {comment}")
+    
+    
+        #sanky chart
+        label = list(incomes.keys()) + ["Total Income"] + list(expenses.keys())
+        source = list(range(len(incomes))) + [len(incomes)] * len(expenses)
+        target = [len(incomes)] * len(incomes) + [label.index(expense)
+                                                  for expense in expenses]
+        value = list(incomes.values()) + list(expenses.values())
+
+        #data to dict, dict to sankey
+        link = dict(source=source, target=target, value=value)
+        node = dict(label=label, pad=20, thickness=30, color="#69b3a2")
+        data = go.Sankey(link=link, node=node)
+
+        #plot the chart
+        fig = go.Figure(data)
+        fig.update_layout(margin=dict(l=0, r=0, t=5, b=5))
+        st.plotly_chart(fig, use_container_width=True)
