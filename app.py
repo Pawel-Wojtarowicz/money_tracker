@@ -2,7 +2,9 @@ import streamlit as st
 import plotly.graph_objects as go
 import calendar
 from datetime import datetime
+import database as db
 
+# https://www.youtube.com/watch?v=3egaMfE9388
 
 # ----- SETTINGS -----
 incomes = ["Salary", "Other"]
@@ -23,6 +25,15 @@ st.title(page_title + " " + page_icon)
 # Drop down values
 years = [datetime.today().year, datetime.today().year - 1]
 months = list(calendar.month_name[1:])
+
+# ---- Db interface ---
+
+
+def get_all_periods():
+    items = db.fetch_all_periods()
+    periods = [item["key"] for item in items]
+    return periods
+
 
 # input
 st.header(f"Data entry in {currency}")
@@ -49,20 +60,20 @@ with st.form("Entry_form", clear_on_submit=True):
         incomes = {income: st.session_state[income] for income in incomes}
         expenses = {expense: st.session_state[expense]
                     for expense in expenses}
-
-        st.write(f"incomes: {incomes}")
-        st.write(f"expenses: {expenses}")
+        db.insert_periods(period, incomes, expenses, comment)
         st.success("Data saved!")
 
 
 st.header("Virtualization")
 with st.form("saved_periods"):
-    period = st.selectbox("Select Period:", ["2022_March"])
+    period = st.selectbox("Select Period:", get_all_periods())
     submitted = st.form_submit_button("Plot Period")
     if submitted:
-        comment = "Some comment"
-        incomes = {"Salary": 5000, "Other": 2000}
-        expenses = {"Mortage": 2200, "Food": 500, "Buddy": 300}
+        # get data from db
+        period_data = db.get_periods(period)
+        comment = period_data.get("comment")
+        expenses = period_data.get("expenses")
+        incomes = period_data.get("incomes")
 
         total_income = sum(incomes.values())
         total_expenses = sum(expenses.values())
@@ -72,21 +83,20 @@ with st.form("saved_periods"):
         col2.metric("Total expense", f"{total_expenses} {currency}")
         col3.metric("Remaining budget", f"{remaining_budget} {currency}")
         st.text(f"Comment: {comment}")
-    
-    
-        #sanky chart
+
+        # sanky chart
         label = list(incomes.keys()) + ["Total Income"] + list(expenses.keys())
         source = list(range(len(incomes))) + [len(incomes)] * len(expenses)
         target = [len(incomes)] * len(incomes) + [label.index(expense)
                                                   for expense in expenses]
         value = list(incomes.values()) + list(expenses.values())
 
-        #data to dict, dict to sankey
+        # data to dict, dict to sankey
         link = dict(source=source, target=target, value=value)
         node = dict(label=label, pad=20, thickness=30, color="#69b3a2")
         data = go.Sankey(link=link, node=node)
 
-        #plot the chart
+        # plot the chart
         fig = go.Figure(data)
         fig.update_layout(margin=dict(l=0, r=0, t=5, b=5))
         st.plotly_chart(fig, use_container_width=True)
